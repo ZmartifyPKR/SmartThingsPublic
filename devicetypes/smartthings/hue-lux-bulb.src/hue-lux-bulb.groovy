@@ -1,6 +1,8 @@
 /**
  *  Hue Lux Bulb
  *
+ *  Philips Hue Type "Dimmable Light"
+ *
  *  Author: SmartThings
  */
 // for the UI
@@ -9,7 +11,6 @@ metadata {
 	definition (name: "Hue Lux Bulb", namespace: "smartthings", author: "SmartThings") {
 		capability "Switch Level"
 		capability "Actuator"
-		capability "Color Temperature"
 		capability "Switch"
 		capability "Refresh"
 		capability "Sensor"
@@ -24,10 +25,10 @@ metadata {
     tiles(scale: 2) {
         multiAttributeTile(name:"rich-control", type: "lighting", canChangeIcon: true){
             tileAttribute ("device.switch", key: "PRIMARY_CONTROL") {
-              attributeState "on", label:'${name}', action:"switch.off", icon:"st.lights.philips.hue-single", backgroundColor:"#79b821", nextState:"turningOff"
-              attributeState "off", label:'${name}', action:"switch.on", icon:"st.lights.philips.hue-single", backgroundColor:"#ffffff", nextState:"turningOn"
-              attributeState "turningOn", label:'${name}', action:"switch.off", icon:"st.lights.philips.hue-single", backgroundColor:"#79b821", nextState:"turningOff"
-              attributeState "turningOff", label:'${name}', action:"switch.on", icon:"st.lights.philips.hue-single", backgroundColor:"#ffffff", nextState:"turningOn"
+              attributeState "on", label:'${name}', action:"switch.off", icon:"st.lights.philips.hue-single", backgroundColor:"#00A0DC", nextState:"turningOff"
+              attributeState "off", label:'${name}', action:"switch.on", icon:"st.lights.philips.hue-single", backgroundColor:"#C6C7CC", nextState:"turningOn"
+              attributeState "turningOn", label:'${name}', action:"switch.off", icon:"st.lights.philips.hue-single", backgroundColor:"#00A0DC", nextState:"turningOff"
+              attributeState "turningOff", label:'${name}', action:"switch.on", icon:"st.lights.philips.hue-single", backgroundColor:"#C6C7CC", nextState:"turningOn"
             }
             tileAttribute ("device.level", key: "SLIDER_CONTROL") {
               attributeState "level", action:"switch level.setLevel", range:"(0..100)"
@@ -37,30 +38,16 @@ metadata {
 			}
         }
 
-		standardTile("switch", "device.switch", width: 2, height: 2, canChangeIcon: true) {
-			state "on", label:'${name}', action:"switch.off", icon:"st.lights.philips.hue-single", backgroundColor:"#79b821", nextState:"turningOff"
-			state "off", label:'${name}', action:"switch.on", icon:"st.lights.philips.hue-single", backgroundColor:"#ffffff", nextState:"turningOn"
-			state "turningOn", label:'${name}', action:"switch.off", icon:"st.lights.philips.hue-single", backgroundColor:"#79b821", nextState:"turningOff"
-			state "turningOff", label:'${name}', action:"switch.on", icon:"st.lights.philips.hue-single", backgroundColor:"#ffffff", nextState:"turningOn"
-        }
-
         controlTile("levelSliderControl", "device.level", "slider", height: 1, width: 2, inactiveLabel: false, range:"(0..100)") {
             state "level", action:"switch level.setLevel"
         }
 
-        controlTile("colorTempSliderControl", "device.colorTemperature", "slider", width: 4, height: 2, inactiveLabel: false, range:"(2000..6500)") {
-            state "colorTemperature", action:"color temperature.setColorTemperature"
-        }
-        valueTile("colorTemp", "device.colorTemperature", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
-            state "colorTemperature", label: '${currentValue} K'
-        }
-
-        standardTile("refresh", "device.switch", inactiveLabel: false, decoration: "flat") {
+        standardTile("refresh", "device.switch", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
             state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
         }
 
-        main(["switch"])
-        details(["rich-control", "colorTempSliderControl", "colorTemp", "refresh"])
+        main(["rich-control"])
+        details(["rich-control", "refresh"])
     }
 }
 
@@ -83,27 +70,24 @@ def parse(description) {
 
 // handle commands
 void on() {
-	parent.on(this)
+	log.trace parent.on(this)
 	sendEvent(name: "switch", value: "on")
 }
 
 void off() {
-	parent.off(this)
+	log.trace parent.off(this)
 	sendEvent(name: "switch", value: "off")
 }
 
 void setLevel(percent) {
 	log.debug "Executing 'setLevel'"
-	parent.setLevel(this, percent)
-	sendEvent(name: "level", value: percent)
-}
-
-void setColorTemperature(value) {
-	if (value) {
-        log.trace "setColorTemperature: ${value}k"
-        parent.setColorTemperature(this, value)
-        sendEvent(name: "colorTemperature", value: value)
-	}
+    if (percent != null && percent >= 0 && percent <= 100) {
+		parent.setLevel(this, percent)
+		sendEvent(name: "level", value: percent)
+		sendEvent(name: "switch", value: "on")
+	} else {
+    	log.warn "$percent is not 0-100"
+    }
 }
 
 void refresh() {
